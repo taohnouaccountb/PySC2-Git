@@ -1,1 +1,5 @@
 data/
+examples/
+pdf/
+.idea/
+*.pyc

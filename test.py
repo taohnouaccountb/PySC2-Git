@@ -1,5 +1,6 @@
 from __future__ import division
 
+import sys
 import numpy as np
 
 from keras.models import Sequential
@@ -141,15 +142,11 @@ class Args(object):
 if __name__ == '__main__':
 
     args = Args()
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--mode', choices=['train', 'test'], default='train')
-    # parser.add_argument('--env-name', type=str, default='BreakoutDeterministic-v4')
-    # parser.add_argument('--weights', type=str, default=None)
 
     # Get the environment and extract the number of actions.
     np.random.seed(123)
     nb_actions = Action.get_size()
-    env = SC2Env(map_name=args.env_name, visualize=False)
+
 
     # Next, we build our model. We use the same model that was described by Mnih et al. (2015).
     input_shape = (WINDOW_LENGTH, number_of_channels(),) + INPUT_SHAPE
@@ -193,24 +190,9 @@ if __name__ == '__main__':
                    train_interval=4, delta_clip=1.)
     dqn.compile(Adam(lr=.00025), metrics=['mae'])
 
-    if args.mode == 'train':
-        # Okay, now it's time to learn something! We capture the interrupt exception so that training
-        # can be prematurely aborted. Notice that you can the built-in Keras callbacks!
-        weights_filename = 'dqn_{}_weights.h5f'.format(args.env_name)
-        checkpoint_weights_filename = 'dqn_' + args.env_name + '_weights_{step}.h5f'
+    for weights_filename in sys.argv[1:]:
         log_filename = 'dqn_{}_log.json'.format(args.env_name)
-        callbacks = [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=50000)]
-        callbacks += [FileLogger(log_filename, interval=100)]
-        dqn.fit(env, callbacks=callbacks, nb_steps=2000000, log_interval=10000)
-
-        # After training is done, we save the final weights one more time.
-        dqn.save_weights(weights_filename, overwrite=True)
-
-        # Finally, evaluate our algorithm for 10 episodes.
-        dqn.test(env, nb_episodes=10, visualize=False)
-    elif args.mode == 'test':
-        weights_filename = 'dqn_{}_weights.h5f'.format(args.env_name)
-        if args.weights:
-            weights_filename = args.weights
+        callbacks = [FileLogger(log_filename, interval=100)]
         dqn.load_weights(weights_filename)
-        dqn.test(env, nb_episodes=10, visualize=True)
+        env = SC2Env(map_name=args.env_name, visualize=False,save_replay_episodes=10)
+        dqn.test(env, nb_episodes=5, visualize=True)

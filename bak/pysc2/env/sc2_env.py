@@ -61,6 +61,8 @@ difficulties = {
     "A": sc_pb.CheatInsane,
 }
 
+FINAL_REWARD = False
+print('FINAL_REWARD: ', FINAL_REWARD)
 
 class SC2Env(environment.Base):
     """A Starcraft II environment.
@@ -131,6 +133,7 @@ class SC2Env(environment.Base):
 
         self._setup((agent_race, bot_race, difficulty), **kwargs)
         self._available_actions = None
+        self._win = None
 
     def _setup(self,
                player_setup,
@@ -247,8 +250,17 @@ class SC2Env(environment.Base):
     @sw.decorate
     def step(self, actions):
         """Apply actions, step the world forward, and return observations."""
-        if self._state == environment.StepType.LAST:
-            return self.reset(), 0, True, dict()
+        # TODO XXXXXX
+        if  self._state == environment.StepType.LAST:
+            state = self.reset()
+            if FINAL_REWARD:
+                if self._win:
+                    reward = 5
+                else:
+                    reward = -5
+            else:
+                reward = 0
+            return state, reward, True, dict()
 
         # Ban action if not available
         if not self._state == environment.StepType.FIRST:
@@ -323,9 +335,10 @@ class SC2Env(environment.Base):
         o = agent_obs[0]
         r = reward[0]
         d = False
-        i = dict()
         # print((o, r, d, i))
         self._available_actions = o['available_actions']
+        self._win = o['screen'].max() != 4
+        i = {'win':self._win}
         return [o, r, d, i]
 
 

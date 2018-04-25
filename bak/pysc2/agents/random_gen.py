@@ -38,14 +38,15 @@ class Action(object):
     def __init__(self, code):
         # [_NO_OP, _SELECT_ARMY, _MOVE_SCREEN*_MOVE_SCREEN, _ATTACK_SCREEN*_ATTACK_SCREEN]
         self.code = code
+
         self._screen_size = 64
-        self._move_size = 5
-        self._attack_size = 5
+        self._move_size = 10
+        self._attack_size = 10
 
         self._no_op = 0
-        self._select_army = 1
+        # self._select_army = 1
 
-        self._move_lower_bound = self._select_army+1
+        self._move_lower_bound = self._no_op+1
         self._move_upper_bound = self._move_lower_bound+self._move_size*self._move_size
 
         self._attack_lower_bound = self._move_upper_bound
@@ -57,8 +58,8 @@ class Action(object):
     def to_pysc2(self):
         if self.code == self._no_op:
             return (0,[])
-        elif self.code == self._select_army:
-            return (_SELECT_ARMY,[[0]])
+        # elif self.code == self._select_army:
+        #     return (_SELECT_ARMY,[[0]])
         elif self.code >= self._move_lower_bound and self.code < self._move_upper_bound:
             delta = self.code - self._move_lower_bound
             x, y = self.axis_mapping(delta, self._move_size)
@@ -73,9 +74,9 @@ class Action(object):
     def axis_mapping(self, delta, scale):
         y = delta % scale
         x = (delta - y) / scale
-        size = self._screen_size
-        x = int(x*1.0/scale*size)
-        y = int(y*1.0/scale*size)
+        size = self._screen_size - 1
+        x = int(x*1.0/(scale-1)*size)
+        y = int(y*1.0/(scale-1)*size)
         return x, y
 
     @staticmethod
